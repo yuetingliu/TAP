@@ -43,25 +43,6 @@ class WorkBook:
                           "\nseparate with comma\n>>>".format(self.sheet_names))
         self.chemicals = chemicals.split(',')
         
-    def get_chemical_old(self):
-        """Get the corresponding chemical formular for each sheet."""
-        chemicals = []
-        for sht in self.sheets:
-            chem = input("Input the formular for sheet {}\n>>>".format(sht.name))
-            chemicals.append(chem)
-            print("Check formular\n{} : {}".format(sht.name, chem))
-            opt = input("Press `n` for next, `r` for re-input\n>>>")
-            if str(opt) == 'n':
-                continue
-            elif str(opt) == 'r':
-                chem = input("Input the formular for sheet {}".format(sht.name))
-                chemicals[-1] = chem
-        self.chemicals = chemicals
-        # print all sheet names and chemicals
-        print("Sheet name\tChemical\n")
-        for name, chem in zip(self.sheet_names, self.chemicals):
-            print("{:<14}{}".format(name, chem))
-
     def get_temp_pulse(self):
         """Get temperature and pulse numbers."""
         temperature = np.linspace(799, 800, 181)
@@ -76,19 +57,18 @@ class WorkBook:
         self.chemicals = ['13Ch4', 'H2O', '13C2H6', '13C2H4',
                           '13CO', '13CO2', 'H2', '13CH4-2']
 
-    def get_section1(self):
-        """Section 1: sheet names and chemical formula"""
+    def get_section0(self):
+        """Section 0: sheet names and chemical formula"""
         values = [self.chemicals, self.sheet_names[1:]]
         df_sec1 = pd.DataFrame(values)
         return (self.sections[0], df_sec1)
 
-    def get_section2(self):
-        """Section 2
+    def get_section1(self):
+        """Section 1
         
         The values are based on the input sheets.
         """
-        import pdb; pdb.set_trace()
-        df_sec1 = np.empty((181, self.num_sheets - 1))
+        df_sec2 = np.empty((181, self.num_sheets - 1))
         # dummy coefficients
         cof = np.linspace(0.1, 1, df_sec1.shape[1])
         for i in range(len(self.chemicals)):
