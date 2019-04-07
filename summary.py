@@ -4,13 +4,6 @@ import numpy as np
 import pandas as pd
 import xlwings as xw
 
-xlsx = 'sample.xlsx'
-
-wb = xw.Book(xlsx)
-sht = wb.sheets['inert']
-
-print("sheets", wb.sheets)
-print("sheet inert", sht.range('A1').value)
 
 class WorkBook:
     """Workbook object to manipulate excel with xlwings."""
