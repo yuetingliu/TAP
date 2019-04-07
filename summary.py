@@ -32,6 +32,22 @@ class WorkBook:
         print("Found {} sheets with names:\n {}".format(
               self.num_sheets, self.sheet_names))
 
+    def load_fragmentation(self, frag_fn):
+        """Load fragmentation database and read relevant values.
+        
+        Generate frag matrix.
+
+        Parameters
+        ----------
+        frag_fn : str
+            the path to fragmentation file
+
+        Returns
+        -------
+        None
+        """
+        pass
+
     def get_chemicals(self):
         """Get the chemical formula, and multipliers for all sheets."""
         chemicals = input(
