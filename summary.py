@@ -106,7 +106,7 @@ def main():
     else:
         fn = sys.argv[1]
     wb = WorkBook(fn)
-    wb._dummy_get_chemicals()
+    wb.get_chemicals()
     df_temp_pulse = wb.get_temp_and_pulse()
     section0 = wb.get_section0()
     section1 = wb.get_section1()
