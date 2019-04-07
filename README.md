@@ -1,6 +1,13 @@
 # Temporal Analysis of Products (TAP) data analysis
 
 ## Requirements
-pip install -f requirements.txt
+xlwings
+numpy 
+pandas
+matplotlib
+
+'''
+pip install -r requirements.txt
+'''
 
 
