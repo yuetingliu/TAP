@@ -2,6 +2,9 @@
 """
 import numpy as np 
 import pandas as pd
+from matplotlib import rcParams
+rcParams['backend'] = 'agg'
+import matplotlib.pyplot as plt
 import xlwings as xw
 
 
@@ -35,8 +38,20 @@ class WorkBook:
         self.sections = sections
         self.num_sheets = len(self.sheets)
         self.sheet_names = [sht.name for sht in self.sheets]
+        # for compatibility, keep chemicals attributes
+        self.chemicals = self.sheet_names
+        self.multipliers = self._get_gain_multipliers()
         print("Found {} sheets with names:\n {}".format(
               self.num_sheets, self.sheet_names))
+
+    def _get_gain_multipliers(self):
+        """Load multipliers for gain.
+        
+        Read it from the excel file
+        """
+        # this is a temporary dummy multiplers
+        multipliers = np.ones(self.num_sheets)
+        return multipliers
 
     def load_fragmentation(self, frag_fn):
         """Load fragmentation database and read relevant values.
@@ -74,6 +89,7 @@ class WorkBook:
         df_temp_pulse = pd.DataFrame(
             temp_pulse, columns=['temperature', 'pulse']
         )
+        self.df_temp_pulse = df_temp_pulse
         return df_temp_pulse
 
     def dummy_get_chemicals(self):
@@ -91,8 +107,7 @@ class WorkBook:
                 self.sheets[self.sheet_names[i]].range('A2', 'A182').value
             )
         # use sheetnames and chemicals as columns
-        cols = ['{}: {}'.format(s, c) for \
-                s,c in zip(self.sheet_names, self.chemicals)]
+        cols = self.chemicals
         self.df_section0 = pd.DataFrame(vals, columns=cols)
         return (self.sections[0], self.df_section0)
 
@@ -124,9 +139,24 @@ class WorkBook:
         
         Fragmentation divided by inert.
         """
-        vals = self.df_section1.values / self.df_section0.iloc[:, 0].values[:, np.newaxis]
+        # get inert values and convert to column vector
+        inert = self.df_section0.iloc[:, 0].values[:, np.newaxis]
+        # divide each col in section 1 with inert 
+        vals = self.df_section1.values / inert
         self.df_section3 = pd.DataFrame(vals, columns=self.chemicals)
         return (self.sections[3], self.df_section3)
+
+    def plot_section_relative(self, size=(5, 3)):
+        """Plot section relative against pulse number."""
+        figures = []
+        xx = self.df_temp_pulse.values[:, 1]
+        yys = self.df_section3.values
+        for i, chem in enumerate(self.chemicals):
+            fig = plt.figure(figsize=size)
+            plt.plot(xx, yys[:, i])
+            plt.title(chem)
+            figures.append(fig)
+        return figures
 
 
 def main():
@@ -138,13 +168,14 @@ def main():
     else:
         fn = sys.argv[1]
     wb = WorkBook(fn)
-    wb.dummy_get_chemicals()
+    #wb.dummy_get_chemicals()
     print("Process data")
     df_temp_pulse = wb.get_temp_and_pulse()
     section0 = wb.get_section0()  # M0
     section1 = wb.get_section1()  # gain correction
     section2 = wb.get_section2()  # fragmentation
     section3 = wb.get_section3()  # relative
+    figures = wb.plot_section_relative()  # plot section relative
     print("Create sheet 'summary'")
     wb.sheets.add('summary', after=wb.sheet_names[-1])
     summary = wb.sheets['summary']
@@ -156,18 +187,25 @@ def main():
     summary.range('C1').value = section0[0] 
     summary.range('C2').options(index=False).value = section0[1]
     # write  section 1, gain correct at gain 7
-    summary.range('K1').value = section1[0]
-    summary.range('K2').options(index=False).value = section1[1]
+    summary.range('L1').value = section1[0]
+    summary.range('L2').options(index=False).value = section1[1]
     # write section 2, framentation orrection
-    summary.range('S1').value = section2[0]
-    summary.range('S2').options(index=False).value = section2[1]
+    summary.range('T1').value = section2[0]
+    summary.range('T2').options(index=False).value = section2[1]
     # write section 3, relative
-    summary.range('AB1').value = section3[0]
-    summary.range('AB2').options(index=False).value = section3[1]
+    summary.range('AC1').value = section3[0]
+    summary.range('AC2').options(index=False).value = section3[1]
+    # put plots of relative at the end
+    print("Plot relative section")
+    for i, fig in enumerate(figures):
+        left = 2500
+        top = i * 300
+        summary.pictures.add(fig, left=left, top=top)
 
     # autofit width
     summary.autofit('c')
-    print("Complete")
+    wb.wb.save()
+    print("Complete, save excel")
 
 if __name__ == '__main__':
     main()
