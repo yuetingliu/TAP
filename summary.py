@@ -11,6 +11,7 @@ import xlwings as xw
 class WorkBook:
     """Workbook object to manipulate excel with xlwings."""
     def __init__(self, fn, fragmentation_matrix='fragmentation_matrix.csv',
+                 gain_setting='gain_setting.xlsx',
                  sections=['M0', 'gain correct at gain 7',
                            'fragmentation correction',
                            'relative',
@@ -40,18 +41,21 @@ class WorkBook:
         self.sheet_names = [sht.name for sht in self.sheets]
         # for compatibility, keep chemicals attributes
         self.chemicals = self.sheet_names
-        self.multipliers = self._get_gain_multipliers()
         print("Found {} sheets with names:\n {}".format(
               self.num_sheets, self.sheet_names))
+        # get gain settings
+        print("Use gain setting file: {}".format(gain_setting))
+        gain_df = pd.read_excel(gain_setting)
+        self.multipliers = gain_df.Factor.values
 
-    def _get_gain_multipliers(self):
-        """Load multipliers for gain.
-        
-        Read it from the excel file
-        """
-        # this is a temporary dummy multiplers
-        multipliers = np.ones(self.num_sheets)
-        return multipliers
+    #def _get_gain_multipliers(self):
+    #    """Load multipliers for gain.
+    #    
+    #    Read it from the excel file
+    #    """
+    #    # this is a temporary dummy multiplers
+    #    multipliers = self.gain_df.Factor.values
+    #    return multipliers
 
     def load_fragmentation(self, frag_fn):
         """Load fragmentation database and read relevant values.
@@ -69,15 +73,15 @@ class WorkBook:
         """
         pass
 
-    def get_chemicals(self):
-        """Get the chemical formula, and multipliers for all sheets."""
-        chemicals = input(
-            "Input chemicals and multipliers for sheets:\n {}" 
-            "\nseparate with comma\n>>>".format(self.sheet_names)
-        )
-        chemicals = np.array(chemicals.split(',')).reshape(-1, 2)
-        self.chemicals = chemicals[:, 0].astype(str)
-        self.multipliers = chemicals[:, 1].astype(np.float32)
+    #def get_chemicals(self):
+    #    """Get the chemical formula, and multipliers for all sheets."""
+    #    chemicals = input(
+    #        "Input chemicals and multipliers for sheets:\n {}" 
+    #        "\nseparate with comma\n>>>".format(self.sheet_names)
+    #    )
+    #    chemicals = np.array(chemicals.split(',')).reshape(-1, 2)
+    #    self.chemicals = chemicals[:, 0].astype(str)
+    #    self.multipliers = chemicals[:, 1].astype(np.float32)
         
     def get_temp_and_pulse(self):
         """Get temperature and pulse numbers."""
@@ -92,11 +96,11 @@ class WorkBook:
         self.df_temp_pulse = df_temp_pulse
         return df_temp_pulse
 
-    def dummy_get_chemicals(self):
-        """For test only, skip manual input of chemicals."""
-        self.chemicals = ['Ar', '13Ch4', 'H2O', '13C2H6', '13C2H4',
-                          '13CO', '13CO2', 'H2', '13CH4-2']
-        self.multipliers = np.ones(len(self.chemicals))
+    #def dummy_get_chemicals(self):
+    #    """For test only, skip manual input of chemicals."""
+    #    self.chemicals = ['Ar', '13Ch4', 'H2O', '13C2H6', '13C2H4',
+    #                      '13CO', '13CO2', 'H2', '13CH4-2']
+    #    self.multipliers = np.ones(len(self.chemicals))
 
     def get_section0(self):
         """Section 0: sheet names and chemical formula"""
@@ -117,8 +121,8 @@ class WorkBook:
         The values are based on section0.
         """
         # dummy coefficients
-        cof = np.linspace(0.1, 1, self.df_section0.shape[1])
-        vals = self.df_section0.values * cof
+        #cof = np.linspace(0.1, 1, self.df_section0.shape[1])
+        vals = self.df_section0.values * self.multipliers
         self.df_section1 = pd.DataFrame(vals, columns=self.chemicals)
 
         return (self.sections[1], self.df_section1)
