@@ -194,11 +194,11 @@ def main():
     summary.range('L1').value = section1[0]
     summary.range('L2').options(index=False).value = section1[1]
     # write section 2, framentation orrection
-    summary.range('T1').value = section2[0]
-    summary.range('T2').options(index=False).value = section2[1]
+    summary.range('U1').value = section2[0]
+    summary.range('U2').options(index=False).value = section2[1]
     # write section 3, relative
-    summary.range('AC1').value = section3[0]
-    summary.range('AC2').options(index=False).value = section3[1]
+    summary.range('AD1').value = section3[0]
+    summary.range('AD2').options(index=False).value = section3[1]
     # put plots of relative at the end
     print("Plot relative section")
     for i, fig in enumerate(figures):
