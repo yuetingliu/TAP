@@ -45,8 +45,8 @@ class WorkBook:
               self.num_sheets, self.sheet_names))
         # get gain settings
         print("Use gain setting file: {}".format(gain_setting))
-        gain_df = pd.read_excel(gain_setting)
-        self.multipliers = gain_df.Factor.values
+        self.gain_df = pd.read_excel(gain_setting, index_col=0)
+        self.multipliers = self.gain_df.Factor.values
 
     #def _get_gain_multipliers(self):
     #    """Load multipliers for gain.
@@ -205,6 +205,13 @@ def main():
         left = 2500
         top = i * 300
         summary.pictures.add(fig, left=left, top=top)
+
+    # add sheet gain setting and store the values
+    gain_setting = wb.sheets.add('gain_setting', after='summary')
+    gain_setting.range('A1').value = wb.gain_df
+    # add sheet fragmentation and store the values
+    fragmentation_matrix = wb.sheets.add('fragmentation_matrix', after='gain_setting')
+    fragmentation_matrix.range('A1').value = wb.fragmentation_matrix
 
     # autofit width
     summary.autofit('c')
