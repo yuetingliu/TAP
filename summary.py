@@ -28,13 +28,19 @@ class WorkBook:
         None
         """
         self.wb = xw.Book(fn)
-        frag_m = pd.read_csv(fragmentation_matrix, index_col=0)
-        self.fragmentation_matrix = frag_m
-        # delete summary sheet if already there
-        if self.wb.sheets[-1].name == 'summary':
-            print("Delete existing summary sheet " 
-                  "\nmake a new one after analysis")
-            self.wb.sheets['summary'].delete()
+        # delete summary, gain setting, etc  sheet if already there
+        # this can be the result of processing the data the second time
+        while 1:
+            last_sheet = self.wb.sheets[-1].name
+            if 'AMU' not in last_sheet:
+                print("Delete existing {}".format(last_sheet))
+                self.wb.sheets[last_sheet].delete()
+            else:
+                break
+        #if self.wb.sheets[-1].name == 'summary':
+        #    print("Delete existing summary sheet " 
+        #          "\nmake a new one after analysis")
+        #    self.wb.sheets['summary'].delete()
         self.sheets = self.wb.sheets
         self.sections = sections
         self.num_sheets = len(self.sheets)
@@ -44,9 +50,13 @@ class WorkBook:
         print("Found {} sheets with names:\n {}".format(
               self.num_sheets, self.sheet_names))
         # get gain settings
-        print("Use gain setting file: {}".format(gain_setting))
         self.gain_df = pd.read_excel(gain_setting, index_col=0)
         self.multipliers = self.gain_df.Factor.values
+        print("Use gain setting file: {}".format(gain_setting))
+        frag_m = pd.read_csv(fragmentation_matrix, index_col=0)
+        self.fragmentation_matrix = frag_m
+        print("Use fragmentation matrix file: "
+              "{}".format(fragmentation_matrix))
 
     #def _get_gain_multipliers(self):
     #    """Load multipliers for gain.
@@ -207,10 +217,14 @@ def main():
         summary.pictures.add(fig, left=left, top=top)
 
     # add sheet gain setting and store the values
+    print("Write gain setting")
     gain_setting = wb.sheets.add('gain_setting', after='summary')
     gain_setting.range('A1').value = wb.gain_df
     # add sheet fragmentation and store the values
-    fragmentation_matrix = wb.sheets.add('fragmentation_matrix', after='gain_setting')
+    print("Write fragmenation matrix")
+    fragmentation_matrix = wb.sheets.add(
+        'fragmentation_matrix', after='gain_setting'
+    )
     fragmentation_matrix.range('A1').value = wb.fragmentation_matrix
 
     # autofit width
