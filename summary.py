@@ -140,9 +140,9 @@ class WorkBook:
         Fragmentation divided by inert.
         """
         # get inert values and convert to column vector
-        inert = self.df_section0.iloc[:, 0].values[:, np.newaxis]
+        inert = self.df_section2.iloc[:, 0].values[:, np.newaxis]
         # divide each col in section 1 with inert 
-        vals = self.df_section1.values / inert
+        vals = self.df_section2.values / inert
         self.df_section3 = pd.DataFrame(vals, columns=self.chemicals)
         return (self.sections[3], self.df_section3)
 
