@@ -10,12 +10,14 @@ import xlwings as xw
 
 class WorkBook:
     """Workbook object to manipulate excel with xlwings."""
-    def __init__(self, fn, fragmentation_matrix='fragmentation_matrix.csv',
-                 gain_setting='gain_setting.xlsx',
-                 sections=['M0', 'gain correct at gain 7',
-                           'fragmentation correction',
-                           'relative',
-                           'sensitivity correction']):
+    def __init__(
+         self, fn,
+         fragmentation_matrix='Fragmentation_Matrix_201904291736.txt',
+         gain_setting='gain_setting.xlsx',
+         sections=['M0', 'gain correct at gain 7',
+                   'fragmentation correction',
+                   'relative',
+                   'sensitivity correction']):
         """Read an excel file and store the status.
         
         Parameters
@@ -53,8 +55,27 @@ class WorkBook:
         self.gain_df = pd.read_excel(gain_setting, index_col=0)
         self.multipliers = self.gain_df.Factor.values
         print("Use gain setting file: {}".format(gain_setting))
-        frag_m = pd.read_csv(fragmentation_matrix, index_col=0)
-        self.fragmentation_matrix = frag_m
+
+        # get fragmentation fn
+        # slice the relevant matrix
+        frag_df = pd.read_csv(fragmentation_matrix, delimiter='\t')
+        # slice the dataframe into two dataframe
+        # one for fragmentation matrix values, and
+        # the other for writing into the result excel
+        rol_array = np.array(frag_df['Mass'])
+        col_array = np.array(frag_df.columns)
+        AMUs = [round(int(name_.replace('AMU', ''))) for name_ in self.sheet_names]
+        rows = []
+        cols = []
+        for amu in AMUs:
+            row = np.where(rol_array == amu)[0][0]
+            col = np.where(col_array == str(amu))[0][0]
+            rows.append(row)
+            cols.append(col)
+        f_matrix = frag_df.iloc[rows, cols].values.astype(np.float32)
+        frag_matrix = frag_df.iloc[rows, [0,1,2]+cols]
+        self.fragmentation_matrix = f_matrix # for calculation
+        self.frag_matrix  = frag_matrix      # for writing into excel sheet
         print("Use fragmentation matrix file: "
               "{}".format(fragmentation_matrix))
 
@@ -143,7 +164,7 @@ class WorkBook:
         for i in range(len(self.chemicals)):
             vals[:, i] = np.dot(
                 self.df_section1.values, 
-                self.fragmentation_matrix.values[i, :].T
+                self.fragmentation_matrix[i, :].T
             )
         self.df_section2 = pd.DataFrame(vals, columns=self.chemicals)
         return (self.sections[2], self.df_section2)
@@ -225,7 +246,7 @@ def main():
     fragmentation_matrix = wb.sheets.add(
         'fragmentation_matrix', after='gain_setting'
     )
-    fragmentation_matrix.range('A1').value = wb.fragmentation_matrix
+    fragmentation_matrix.range('A1').options(index=False).value = wb.frag_matrix
 
     # autofit width
     summary.autofit('c')
