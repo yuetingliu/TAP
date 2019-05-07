@@ -1,5 +1,7 @@
 """This script reads an excel spreadsheet and generates a summary sheet.
 """
+import shutil
+
 import numpy as np 
 import pandas as pd
 from matplotlib import rcParams
@@ -29,21 +31,23 @@ class WorkBook:
         -------
         None
         """
-        self.wb = xw.Book(fn)
+        # make a copy of the data file
+        cp = fn.replace('.xlsx', '_processed.xlsx')
+        shutil.copy(fn, cp)
+        self.wb = xw.Book(cp)
         # delete summary, gain setting, etc  sheet if already there
         # this can be the result of processing the data the second time
-        while 1:
-            last_sheet = self.wb.sheets[-1].name
-            if 'AMU' not in last_sheet:
-                print("Delete existing {}".format(last_sheet))
-                self.wb.sheets[last_sheet].delete()
-            else:
-                break
+        useful_sheets = self.wb.sheets
+        for i in range(len(useful_sheets)):
+            current_sheet = useful_sheets[i]
+            if 'AMU' not in current_sheet.name:
+                print("Delete non-AMU sheet:{}".format(current_sheet.name))
+                useful_sheets[i].delete()
+        self.sheets = useful_sheets
         #if self.wb.sheets[-1].name == 'summary':
         #    print("Delete existing summary sheet " 
         #          "\nmake a new one after analysis")
         #    self.wb.sheets['summary'].delete()
-        self.sheets = self.wb.sheets
         self.sections = sections
         self.num_sheets = len(self.sheets)
         self.sheet_names = [sht.name for sht in self.sheets]
@@ -64,7 +68,8 @@ class WorkBook:
         # the other for writing into the result excel
         rol_array = np.array(frag_df['Mass'])
         col_array = np.array(frag_df.columns)
-        AMUs = [round(int(name_.replace('AMU', ''))) for name_ in self.sheet_names]
+        AMUs = [round(int(name_.replace('AMU', '').replace('a', ''))) \
+                for name_ in self.sheet_names]
         rows = []
         cols = []
         for amu in AMUs:
@@ -139,7 +144,7 @@ class WorkBook:
         vals = np.zeros((181, len(self.chemicals)))
         for i in range(len(self.chemicals)):
             vals[:, i] = np.array(
-                self.sheets[self.sheet_names[i]].range('A2', 'A182').value
+                self.sheets[self.sheet_names[i]].range('C2', 'C182').value
             )
         # use sheetnames and chemicals as columns
         cols = self.chemicals
