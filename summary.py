@@ -1,6 +1,7 @@
 """This script reads an excel spreadsheet and generates a summary sheet.
 """
 import shutil
+import re
 
 import numpy as np 
 import pandas as pd
@@ -68,7 +69,7 @@ class WorkBook:
         # the other for writing into the result excel
         rol_array = np.array(frag_df['Mass'])
         col_array = np.array(frag_df.columns)
-        AMUs = [round(int(name_.replace('AMU', '').replace('a', ''))) \
+        AMUs = [round(re.findall('\d+', name_)[0]) \
                 for name_ in self.sheet_names]
         rows = []
         cols = []
