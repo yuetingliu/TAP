@@ -128,6 +128,7 @@ class WorkBook:
         """Get temperature and pulse numbers."""
         temp = np.array(self.df['temperature'])
         self.num_rows = len(temp)
+        print("Total rows: {}".format(self.num_rows))
         #temp= np.linspace(799, 800, 181)
         pulse = np.ones(temp.shape[0])
         for i in range(pulse.shape[0]):
