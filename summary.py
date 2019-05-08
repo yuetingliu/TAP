@@ -2,6 +2,7 @@
 """
 import shutil
 import re
+import os
 
 import numpy as np 
 import pandas as pd
@@ -34,16 +35,18 @@ class WorkBook:
         """
         # make a copy of the data file
         cp = fn.replace('.xlsx', '_processed.xlsx')
+        if os.path.exists(cp):
+            os.remove(cp)
         shutil.copy(fn, cp)
         self.wb = xw.Book(cp)
         # delete summary, gain setting, etc  sheet if already there
         # this can be the result of processing the data the second time
         useful_sheets = self.wb.sheets
-        for i in range(len(useful_sheets)):
-            current_sheet = useful_sheets[i]
-            if 'AMU' not in current_sheet.name:
-                print("Delete non-AMU sheet:{}".format(current_sheet.name))
-                useful_sheets[i].delete()
+        del_list = [sh.name for sh in useful_sheets if 'AMU' not in sh.name]
+        if len(del_list) > 0:
+            for sh_name in del_list:
+                print("Delete non-AMU sheet:{}".format(sh_name))
+                useful_sheets[sh_name].delete()
         self.sheets = useful_sheets
         #if self.wb.sheets[-1].name == 'summary':
         #    print("Delete existing summary sheet " 
@@ -69,7 +72,7 @@ class WorkBook:
         # the other for writing into the result excel
         rol_array = np.array(frag_df['Mass'])
         col_array = np.array(frag_df.columns)
-        AMUs = [round(re.findall('\d+', name_)[0]) \
+        AMUs = [int(re.findall('\d+', name_)[0]) \
                 for name_ in self.sheet_names]
         rows = []
         cols = []
@@ -257,6 +260,8 @@ def main():
     # autofit width
     summary.autofit('c')
     wb.wb.save()
+    #app = xw.apps.active
+    #app.quit()
     print("Complete, save excel")
 
 if __name__ == '__main__':
