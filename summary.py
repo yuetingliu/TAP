@@ -34,6 +34,7 @@ class WorkBook:
         None
         """
         # make a copy of the data file
+        self.df = pd.read_excel(fn)
         cp = fn.replace('.xlsx', '_processed.xlsx')
         if os.path.exists(cp):
             os.remove(cp)
@@ -125,7 +126,9 @@ class WorkBook:
         
     def get_temp_and_pulse(self):
         """Get temperature and pulse numbers."""
-        temp= np.linspace(799, 800, 181)
+        temp = np.array(self.df['temperature'])
+        self.num_rows = len(temp)
+        #temp= np.linspace(799, 800, 181)
         pulse = np.ones(temp.shape[0])
         for i in range(pulse.shape[0]):
             pulse[i] = pulse[i] + i * 9
@@ -145,10 +148,10 @@ class WorkBook:
     def get_section0(self):
         """Section 0: sheet names and chemical formula"""
         # read M0 of each sheet
-        vals = np.zeros((181, len(self.chemicals)))
+        vals = np.zeros((self.num_rows, len(self.chemicals)))
         for i in range(len(self.chemicals)):
             vals[:, i] = np.array(
-                self.sheets[self.sheet_names[i]].range('C2', 'C182').value
+                self.sheets[self.sheet_names[i]].range('C2', 'C{:d}'.format(self.num_rows+1)).value
             )
         # use sheetnames and chemicals as columns
         cols = self.chemicals
