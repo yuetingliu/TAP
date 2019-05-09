@@ -34,6 +34,9 @@ class WorkBook:
         None
         """
         # make a copy of the data file
+        root, _ = os.path.split(fn)
+        fragmentation_matrix = os.path.join(root, fragmentation_matrix)
+        gain_setting = os.path.join(root, gain_setting)
         cp = fn.replace('.xlsx', '_processed.xlsx')
         if os.path.exists(cp):
             os.remove(cp)
