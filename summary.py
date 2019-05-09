@@ -34,7 +34,6 @@ class WorkBook:
         None
         """
         # make a copy of the data file
-        self.df = pd.read_excel(fn)
         cp = fn.replace('.xlsx', '_processed.xlsx')
         if os.path.exists(cp):
             os.remove(cp)
@@ -49,6 +48,7 @@ class WorkBook:
                 print("Delete non-AMU sheet:{}".format(sh_name))
                 useful_sheets[sh_name].delete()
         self.sheets = useful_sheets
+        self.df = pd.read_excel(cp, sheet_name=self.sheets[0].name)
         #if self.wb.sheets[-1].name == 'summary':
         #    print("Delete existing summary sheet " 
         #          "\nmake a new one after analysis")
@@ -62,7 +62,12 @@ class WorkBook:
               self.num_sheets, self.sheet_names))
         # get gain settings
         self.gain_df = pd.read_excel(gain_setting, index_col=0)
-        self.multipliers = self.gain_df.Factor.values
+        # select the gain values based on AMUs
+        multiples = []
+        for name in self.sheet_names:
+            multiples.append(self.gain_df.loc[name, 'Factor'])
+        self.multipliers = np.array(multiples)
+        #self.multipliers = self.gain_df.Factor.values
         print("Use gain setting file: {}".format(gain_setting))
 
         # get fragmentation fn
