@@ -65,7 +65,9 @@ class WorkBook:
         # select the gain values based on AMUs
         multiples = []
         for name in self.sheet_names:
-            multiples.append(self.gain_df.loc[name, 'Factor'])
+            # name in gain settings does not have `a`
+            AMU_name = name.replace('a', '')
+            multiples.append(self.gain_df.loc[AMU_name, 'Factor'])
         self.multipliers = np.array(multiples)
         #self.multipliers = self.gain_df.Factor.values
         print("Use gain setting file: {}".format(gain_setting))
