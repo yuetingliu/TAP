@@ -159,7 +159,8 @@ class WorkBook:
         vals = np.zeros((self.num_rows, len(self.chemicals)))
         for i in range(len(self.chemicals)):
             vals[:, i] = np.array(
-                self.sheets[self.sheet_names[i]].range('C2', 'C{:d}'.format(self.num_rows+1)).value
+                self.sheets[self.sheet_names[i]].range('C2', 'C{:d}'.format(
+                self.num_rows+1)).value
             )
         # use sheetnames and chemicals as columns
         cols = self.chemicals
@@ -230,7 +231,21 @@ def main():
     section1 = wb.get_section1()  # gain correction
     section2 = wb.get_section2()  # fragmentation
     section3 = wb.get_section3()  # relative
+
+    # merge all section data into one dataframe
+    # use multi_index columns
+    sections = [section0, section1, section2, section3]
+    for i in range(4):
+        col_idx = [
+            (i, j) for i, j in zip(
+            [sections[i][0]]*len(sections[i][1].columns), 
+            sections[i][1].columns)]
+        sections[i][1].columns= pd.MultiIndex.from_tuples(col_idx)
+    secs = [sec[1] for sec in sections]
+    df_data = pd.concat(secs, axis=1, ignore_index=False)    
     figures = wb.plot_section_relative()  # plot section relative
+
+    # write processed data 
     print("Create sheet 'summary'")
     wb.sheets.add('summary', after=wb.sheet_names[-1])
     summary = wb.sheets['summary']
@@ -238,35 +253,40 @@ def main():
     print("Write data to summary")
     # write temperature and pulse
     summary.range('A2').options(index=False).value = df_temp_pulse
+    summary.range('C1').options(index=False).value = df_data
     # write section 0, title: MO, content: chemicals, sheet names
-    summary.range('C1').value = section0[0] 
-    summary.range('C2').options(index=False).value = section0[1]
-    # write  section 1, gain correct at gain 7
-    summary.range('L1').value = section1[0]
-    summary.range('L2').options(index=False).value = section1[1]
-    # write section 2, framentation orrection
-    summary.range('U1').value = section2[0]
-    summary.range('U2').options(index=False).value = section2[1]
-    # write section 3, relative
-    summary.range('AD1').value = section3[0]
-    summary.range('AD2').options(index=False).value = section3[1]
+   # summary.range('C1').value = section0[0] 
+   # summary.range('C2').options(index=False).value = section0[1]
+   # # write  section 1, gain correct at gain 7
+   # summary.range('L1').value = section1[0]
+   # summary.range('L2').options(index=False).value = section1[1]
+   # # write section 2, framentation orrection
+   # summary.range('U1').value = section2[0]
+   # summary.range('U2').options(index=False).value = section2[1]
+   # # write section 3, relative
+   # summary.range('AD1').value = section3[0]
+   # summary.range('AD2').options(index=False).value = section3[1]
     # put plots of relative at the end
-    print("Plot relative section")
-    for i, fig in enumerate(figures):
-        left = 2500
-        top = i * 300
-        summary.pictures.add(fig, left=left, top=top)
 
     # add sheet gain setting and store the values
     print("Write gain setting")
     gain_setting = wb.sheets.add('gain_setting', after='summary')
     gain_setting.range('A1').value = wb.gain_df
+    
     # add sheet fragmentation and store the values
     print("Write fragmenation matrix")
     fragmentation_matrix = wb.sheets.add(
         'fragmentation_matrix', after='gain_setting'
     )
     fragmentation_matrix.range('A1').options(index=False).value = wb.frag_matrix
+    
+    # add sheet for plots
+    plots = wb.sheets.add('plots', after='fragmentation_matrix')
+    print("Plot relative section")
+    for i, fig in enumerate(figures):
+        left = 0
+        top = i * 300
+        plots.pictures.add(fig, left=left, top=top)
 
     # autofit width
     summary.autofit('c')
