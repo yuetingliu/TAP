@@ -63,7 +63,9 @@ class WorkBook:
         self.chemicals = self.sheet_names
         print("Found {} sheets with names:\n {}".format(
               self.num_sheets, self.sheet_names))
+
         # get gain settings
+        print("Use gain setting file: {}".format(gain_setting))
         self.gain_df = pd.read_excel(gain_setting, index_col=0)
         # select the gain values based on AMUs
         multiples = []
@@ -72,8 +74,15 @@ class WorkBook:
             AMU_name = name.replace('a', '')
             multiples.append(self.gain_df.loc[AMU_name, 'Factor'])
         self.multipliers = np.array(multiples)
+
+        # find the corresponding AMU of inert and the location
+        inert_amu = self.gain_df.loc['inert', 'Experiment setting']
+        amu_set = [int(re.findall('\d+', name)[0]) for name in self.sheet_names]
+        inert_num = int(re.findall('\d+', inert_amu)[0])
+        self.inert_loc = amu_set.index(inert_num) 
+        print("Inert AMU: {}, location in AMUs: {}".format(
+              inert_amu, self.inert_loc+1))
         #self.multipliers = self.gain_df.Factor.values
-        print("Use gain setting file: {}".format(gain_setting))
 
         # get fragmentation fn
         # slice the relevant matrix
@@ -199,7 +208,7 @@ class WorkBook:
         Fragmentation divided by inert.
         """
         # get inert values and convert to column vector
-        inert = self.df_section2.iloc[:, 0].values[:, np.newaxis]
+        inert = self.df_section2.iloc[:, self.inert_loc].values[:, np.newaxis]
         # divide each col in section 1 with inert 
         vals = self.df_section2.values / inert
         self.df_section3 = pd.DataFrame(vals, columns=self.chemicals)
