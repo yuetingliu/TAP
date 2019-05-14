@@ -17,7 +17,7 @@ class WorkBook:
     """Workbook object to manipulate excel with xlwings."""
     def __init__(
          self, fn,
-         fragmentation_matrix='Fragmentation_Matrix_201904291736.txt',
+         fragmentation_matrix='Fragmentation_Matrix.txt',
          gain_setting='gain_setting.xlsx',
          sections=['M0', 'gain correct at gain 7',
                    'fragmentation correction',
