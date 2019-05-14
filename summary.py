@@ -3,6 +3,7 @@
 import shutil
 import re
 import os
+import sys
 
 import numpy as np 
 import pandas as pd
@@ -72,7 +73,11 @@ class WorkBook:
         for name in self.sheet_names:
             # name in gain settings does not have `a`
             AMU_name = name.replace('a', '')
-            multiples.append(self.gain_df.loc[AMU_name, 'Factor'])
+            try:
+                multiples.append(self.gain_df.loc[AMU_name, 'Factor'])
+            except KeyError:
+                print("No {} found in gain setting".format(AMU_name))
+                sys.exit()
         self.multipliers = np.array(multiples)
 
         # find the corresponding AMU of inert and the location
@@ -104,7 +109,8 @@ class WorkBook:
                 cols.append(col)
             except IndexError as err:
                 print("amu {} is wrong, either not in gain setting, "
-                      "or not in fragmentation".format(amu))
+                      "or not in fragmentation matrix".format(amu))
+                sys.exit()
         f_matrix = frag_df.iloc[rows, cols].values.astype(np.float32)
         frag_matrix = frag_df.iloc[rows, [0,1,2]+cols]
         self.fragmentation_matrix = f_matrix # for calculation
