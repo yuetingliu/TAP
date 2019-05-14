@@ -97,10 +97,14 @@ class WorkBook:
         rows = []
         cols = []
         for amu in AMUs:
-            row = np.where(rol_array == amu)[0][0]
-            col = np.where(col_array == str(amu))[0][0]
-            rows.append(row)
-            cols.append(col)
+            try:
+                row = np.where(rol_array == amu)[0][0]
+                col = np.where(col_array == str(amu))[0][0]
+                rows.append(row)
+                cols.append(col)
+            except IndexError as err:
+                print("amu {} is wrong, either not in gain setting, "
+                      "or not in fragmentation".format(amu))
         f_matrix = frag_df.iloc[rows, cols].values.astype(np.float32)
         frag_matrix = frag_df.iloc[rows, [0,1,2]+cols]
         self.fragmentation_matrix = f_matrix # for calculation
