@@ -112,15 +112,6 @@ class WorkBook:
         print("Use fragmentation matrix file: "
               "{}".format(fragmentation_matrix))
 
-    #def _get_gain_multipliers(self):
-    #    """Load multipliers for gain.
-    #    
-    #    Read it from the excel file
-    #    """
-    #    # this is a temporary dummy multiplers
-    #    multipliers = self.gain_df.Factor.values
-    #    return multipliers
-
     def load_fragmentation(self, frag_fn):
         """Load fragmentation database and read relevant values.
         
@@ -137,16 +128,6 @@ class WorkBook:
         """
         pass
 
-    #def get_chemicals(self):
-    #    """Get the chemical formula, and multipliers for all sheets."""
-    #    chemicals = input(
-    #        "Input chemicals and multipliers for sheets:\n {}" 
-    #        "\nseparate with comma\n>>>".format(self.sheet_names)
-    #    )
-    #    chemicals = np.array(chemicals.split(',')).reshape(-1, 2)
-    #    self.chemicals = chemicals[:, 0].astype(str)
-    #    self.multipliers = chemicals[:, 1].astype(np.float32)
-        
     def get_temp_and_pulse(self):
         """Get temperature and pulse numbers."""
         temp = np.array(self.df['temperature'])
@@ -155,19 +136,13 @@ class WorkBook:
         #temp= np.linspace(799, 800, 181)
         pulse = np.ones(temp.shape[0])
         for i in range(pulse.shape[0]):
-            pulse[i] = pulse[i] + i * 9
+            pulse[i] = pulse[i] + i * len(self.chemicals)
         temp_pulse = np.vstack([temp, pulse]).T
         df_temp_pulse = pd.DataFrame(
             temp_pulse, columns=['temperature', 'pulse']
         )
         self.df_temp_pulse = df_temp_pulse
         return df_temp_pulse
-
-    #def dummy_get_chemicals(self):
-    #    """For test only, skip manual input of chemicals."""
-    #    self.chemicals = ['Ar', '13Ch4', 'H2O', '13C2H6', '13C2H4',
-    #                      '13CO', '13CO2', 'H2', '13CH4-2']
-    #    self.multipliers = np.ones(len(self.chemicals))
 
     def get_section0(self):
         """Section 0: sheet names and chemical formula"""
@@ -197,12 +172,16 @@ class WorkBook:
 
     def get_section2(self):
         """Fragmentation correction."""
-        vals = np.empty(self.df_section1.values.shape)
-        for i in range(len(self.chemicals)):
-            vals[:, i] = np.dot(
-                self.df_section1.values, 
-                self.fragmentation_matrix[i, :].T
-            )
+        #vals = np.empty(self.df_section1.values.shape)
+        #for i in range(len(self.chemicals)):
+        #    vals[:, i] = np.dot(
+        #        self.df_section1.values, 
+        #        self.fragmentation_matrix[i, :].T
+        #    )
+        vals = np.dot(
+            np.linalg.inv(self.fragmentation_matrix.T),
+            self.df_section1.values.T
+        ).T
         self.df_section2 = pd.DataFrame(vals, columns=self.chemicals)
         return (self.sections[2], self.df_section2)
 
